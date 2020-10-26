@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>We Talk</title>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <form class="name_form fullpage">
+      <input id="name" placeholder="Enter name">
+      <!-- <input type="submit"> -->
+    </form>
+
+    <div class="fullpage chat hidden">
+      <div class="users">
+        <div class="heading relative">
+          <div class="title relative">Users</div>
+          <div class="desc absolute">Active</div>
+        </div>
+        <ul id="users"></ul>
+      </div>
+      <div class="right">
+        <ul id="messages" class="messages"></ul>
+        <form class="message_form hidden">
+          <input id="message" placeholder="Enter message">
+          <!-- <input type="submit" value="Send"> -->
+        </form>
+      </div>
+    </div>
+  </body>
+  <script src="js/jquery.min.js"></script>
+  <script src="js/socket.io.js"></script>
+  <script>
+    var HOST = location.origin;
+    var io = io(HOST);
+    var users = [];
+    var receiver = "";
+    var sender = "";
+
+    $('.name_form').on('submit', async (e) => {
+      e.preventDefault();
+      var name = document.getElementById("name").value;
+      if(users.length === 0)
+        users.push(name);
+      else if(!users.includes(name))
+        users.push(name);
+      else {
+        alert("username already assigned!");
+        return false;
+      }
+      sender = name;
+      document.querySelector('.name_form').classList.add('hidden');
+      document.querySelector('.chat').classList.remove('hidden');
+      io.emit("user_connected", name);
+    });
+
+    function onUserSelected(username, _this) {
+      $('#users').find('li').removeClass('active');
+      $(_this).addClass('active');
+      $('#messages').html('');
+      $('.message_form').removeClass('hidden');
+      $.ajax({
+        url: `${HOST}/getmessages`,
+        method: "POST",
+        data: {
+          sender: sender,
+          receiver: receiver
+        },
+        success: function (response) {
+          var messages = JSON.parse(response);
+          var html = "";
+          for (var a = 0; a < messages.length; a++) {
+            const className = messages[a].sender === sender ? 'right' : 'left';
+            html += `<li class='${className}'>${messages[a].sender} says: ${messages[a].message}</li>`;
+          }
+          document.getElementById("messages").innerHTML += html;
+        }
+      });
+      receiver = username;
+    }
+
+    $('.message_form').on('submit', (e) => {
+      e.preventDefault();
+      var message = $("#message").val();
+      io.emit("send_message", {
+        sender: sender,
+        receiver: receiver,
+        message: message
+      });
+      var html = "";
+      html += "<li class='right'>You said: " + message + "</li>";
+      document.getElementById("messages").innerHTML += html;
+      $("#message").val('');
+      return false;
+    });
+
+    io.on("user_connected", function (username) {
+      var html = "";
+      if(username !== sender)
+        html += "<li onclick='onUserSelected(this.innerHTML, this);'>" + username + "</li>";
+      document.getElementById("users").innerHTML += html;
+    });
+
+    io.on("new_message", function (data) {
+      if(receiver === data.sender) {
+        var html = "";
+        html += "<li class='left'>" + data.sender + " says: " + data.message + "</li>";
+        document.getElementById("messages").innerHTML += html;
+      } else {
+        console.log(`${data.sender} sent a message!`);
+      }
+    });
+  </script>
+</html>
