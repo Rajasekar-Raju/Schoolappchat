@@ -18,6 +18,7 @@ input{font-size: 16px; padding: 5px 10px; margin: 0px 2.5px; border: 0px; backgr
 .title{margin-top: 20px; z-index: 10;}
 .desc{top: -8px; left: 0; color: #00000040; font-size: 48px; z-index: 1;}
 .messages{height: calc(100vh - 50px);}
+.messages .right{width: 60%; float: right; height: auto; background-color: #66226615;}
 
 #users{overflow-y: scroll; height: calc(100vh - 60px);}
 

@@ -31,6 +31,7 @@
   </body>
   <script src="js/jquery.min.js"></script>
   <script src="js/socket.io.js"></script>
+  <script src="js/notify.min.js"></script>
   <script>
     var HOST = location.origin;
     var io = io(HOST);
@@ -60,23 +61,23 @@
       $(_this).addClass('active');
       $('#messages').html('');
       $('.message_form').removeClass('hidden');
-      $.ajax({
-        url: `${HOST}/getmessages`,
-        method: "POST",
-        data: {
-          sender: sender,
-          receiver: receiver
-        },
-        success: function (response) {
-          var messages = JSON.parse(response);
-          var html = "";
-          for (var a = 0; a < messages.length; a++) {
-            const className = messages[a].sender === sender ? 'right' : 'left';
-            html += `<li class='${className}'>${messages[a].sender} says: ${messages[a].message}</li>`;
-          }
-          document.getElementById("messages").innerHTML += html;
-        }
-      });
+      // $.ajax({
+      //   url: `${HOST}/getmessages`,
+      //   method: "POST",
+      //   data: {
+      //     sender: sender,
+      //     receiver: receiver
+      //   },
+      //   success: function (response) {
+      //     var messages = JSON.parse(response);
+      //     var html = "";
+      //     for (var a = 0; a < messages.length; a++) {
+      //       const className = messages[a].sender === sender ? 'right' : 'left';
+      //       html += `<li class='${className}'>${messages[a].sender} says: ${messages[a].message}</li>`;
+      //     }
+      //     document.getElementById("messages").innerHTML += html;
+      //   }
+      // });
       receiver = username;
     }
 
@@ -103,12 +104,17 @@
     });
 
     io.on("new_message", function (data) {
+      console.log(data, receiver);
       if(receiver === data.sender) {
         var html = "";
         html += "<li class='left'>" + data.sender + " says: " + data.message + "</li>";
         document.getElementById("messages").innerHTML += html;
       } else {
         console.log(`${data.sender} sent a message!`);
+        $.notify(`${data.sender} sent a message!`, {
+          clickToHide: true,
+          autoHide: false
+        });
       }
     });
   </script>
